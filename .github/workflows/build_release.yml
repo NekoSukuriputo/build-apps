@@ -99,30 +99,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 📤 Upload APK & Notify Telegram via n8n
-        if: success() # Hanya jalan jika build sukses
+        if: success()
         run: |
           echo "🔍 Mencari file APK..."
-          # Mencari file APK di direktori (biasanya di build/app/outputs/flutter-apk/ atau release/)
-          # Perintah ini akan mengambil file APK pertama yang ditemukan
-          APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+          # Kita gunakan nama file yang pasti 'release.apk' karena sudah direname di step sebelumnya
+          APK_PATH="release.apk"
 
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ File APK tidak ditemukan!"
-            exit 1
+          if [ ! -f "$APK_PATH" ]; then
+             echo "⚠️ release.apk tidak ditemukan, mencoba cari file apk lain..."
+             APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
           fi
+          
+          APP_NAME="Doki-App"
+          echo "✅ File siap: $APK_PATH"
 
-          APP_NAME=$(basename "$APK_PATH" .apk)
-          echo "✅ Menemukan: $APP_NAME di $APK_PATH"
-
-          # Upload ke transfer.sh agar n8n bisa mengambilnya (Link berlaku 14 hari)
-          echo "🚀 Mengupload ke public storage..."
-          DOWNLOAD_URL=$(curl --upload-file "$APK_PATH" "https://transfer.sh/$APP_NAME.apk")
+          # --- BAGIAN INI DIGANTI (Pakai 0x0.st) ---
+          echo "🚀 Mengupload ke 0x0.st (Alternative transfer.sh)..."
+          # 0x0.st mengembalikan URL file sebagai response text
+          DOWNLOAD_URL=$(curl -F "file=@$APK_PATH" https://0x0.st)
+          
+          # Bersihkan whitespace jika ada
+          DOWNLOAD_URL=$(echo "$DOWNLOAD_URL" | tr -d '[:space:]')
           
           echo "🔗 Public Link: $DOWNLOAD_URL"
 
-          # Trigger Webhook n8n
-          # Ganti URL di bawah dengan URL n8n Production kamu
+          # --- PERBAIKAN URL N8N (Gunakan URL Production) ---
+          # Hapus '-test' dari URL agar jalan otomatis tanpa perlu standby di n8n
           echo "📨 Mengirim notifikasi ke n8n..."
           curl -X POST -H "Content-Type: application/json" \
             -d "{\"app_name\": \"$APP_NAME\", \"version\": \"${{ github.run_number }}\", \"download_url\": \"$DOWNLOAD_URL\"}" \
-            https://ai-n8n.nekosukuriputo.dev/webhook-test/github-apk-build
+            https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
