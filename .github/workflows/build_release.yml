@@ -98,3 +98,31 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📤 Upload APK & Notify Telegram via n8n
+        if: success() # Hanya jalan jika build sukses
+        run: |
+          echo "🔍 Mencari file APK..."
+          # Mencari file APK di direktori (biasanya di build/app/outputs/flutter-apk/ atau release/)
+          # Perintah ini akan mengambil file APK pertama yang ditemukan
+          APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ File APK tidak ditemukan!"
+            exit 1
+          fi
+
+          APP_NAME=$(basename "$APK_PATH" .apk)
+          echo "✅ Menemukan: $APP_NAME di $APK_PATH"
+
+          # Upload ke transfer.sh agar n8n bisa mengambilnya (Link berlaku 14 hari)
+          echo "🚀 Mengupload ke public storage..."
+          DOWNLOAD_URL=$(curl --upload-file "$APK_PATH" "https://transfer.sh/$APP_NAME.apk")
+          
+          echo "🔗 Public Link: $DOWNLOAD_URL"
+
+          # Trigger Webhook n8n
+          # Ganti URL di bawah dengan URL n8n Production kamu
+          echo "📨 Mengirim notifikasi ke n8n..."
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"${{ github.run_number }}\", \"download_url\": \"$DOWNLOAD_URL\"}" \
+            https://ai-n8n.nekosukuriputo.dev/webhook-test/github-apk-build
