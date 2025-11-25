@@ -1,7 +1,7 @@
 name: Test Webhook Connection
 
 on:
-  workflow_dispatch: # Agar bisa dijalankan manual lewat tombol
+  workflow_dispatch:
 
 jobs:
   test-connection:
@@ -11,8 +11,8 @@ jobs:
         run: |
           echo "Mencoba mengirim data dummy ke n8n..."
           
-          # Kita pakai link dummy yang pasti valid (gambar kecil)
-          DUMMY_URL="https://via.placeholder.com/150.png?text=Fake_APK_File"
+          # Kita pakai Logo GitHub yang pasti servernya ON terus
+          DUMMY_URL="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
           
           curl -v --retry 3 \
             -X POST -H "Content-Type: application/json" \
