@@ -1,0 +1,20 @@
+name: Test Webhook Connection
+
+on:
+  workflow_dispatch: # Agar bisa dijalankan manual lewat tombol
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚀 Test Hit n8n
+        run: |
+          echo "Mencoba mengirim data dummy ke n8n..."
+          
+          # Kita pakai link dummy yang pasti valid (gambar kecil)
+          DUMMY_URL="https://via.placeholder.com/150.png?text=Fake_APK_File"
+          
+          curl -v --retry 3 \
+            -X POST -H "Content-Type: application/json" \
+            -d "{\"app_name\": \"TEST-CONNECTION\", \"version\": \"debug-mode\", \"download_url\": \"$DUMMY_URL\"}" \
+            https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
