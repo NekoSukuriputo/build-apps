@@ -119,5 +119,5 @@ jobs:
           # Kita kirim data teks (link/versi) sebagai form-data biasa
           curl -v --retry 3 \
             -X POST \
-            -F "apk_file=@$FINAL_FILENAME" \
+            -F "apk_file=@$FINAL_FILENAME;type=application/vnd.android.package-archive" \
             "https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build?app_name=$APP_NAME&version=$VERSION&github_url=$GITHUB_URL"
