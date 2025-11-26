@@ -98,42 +98,42 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: 📤 Upload to TmpFiles & Notify n8n
+      - name: 📤 Upload to File.io & Notify n8n
         if: success()
         run: |
           APP_NAME="Doki-App"
           VERSION="${{ steps.release_info.outputs.tag }}"
           
-          # 1. Tentukan Nama File Keren yang diinginkan
-          # Contoh hasil: "Doki-App-v20251126.apk"
+          # 1. Rename File agar rapi di Telegram
           FINAL_FILENAME="${APP_NAME}-${VERSION}.apk"
-          
-          # 2. Rename file 'release.apk' menjadi nama baru
           mv release.apk "$FINAL_FILENAME"
           
-          echo "✅ File direname menjadi: $FINAL_FILENAME"
+          echo "🚀 Mengupload $FINAL_FILENAME ke File.io..."
           
-          # Link Permanen GitHub (Untuk Teks Pesan)
-          GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          # 2. Upload ke File.io (Masa berlaku 14 hari atau 1x download)
+          # Menggunakan -s (silent) agar log bersih
+          RESPONSE=$(curl -s -F "file=@$FINAL_FILENAME" https://file.io)
           
-          echo "🚀 Mengupload ke TmpFiles.org..."
+          # 3. Parsing JSON menggunakan jq (Sudah ada di GitHub Runner)
+          # Kita ambil value dari key "link"
+          UPLOAD_URL=$(echo $RESPONSE | jq -r '.link')
           
-          # Upload file dengan nama BARU
-          RESPONSE=$(curl -F "file=@$FINAL_FILENAME" https://tmpfiles.org/api/v1/upload)
-          PREVIEW_URL=$(echo $RESPONSE | grep -o 'https://tmpfiles.org/[^"]*')
-          
-          # Ubah jadi direct link (/dl/)
-          # Karena kita upload dengan nama baru, URL-nya otomatis jadi .../Doki-App-v2025.apk
-          TEMP_UPLOAD_URL=$(echo $PREVIEW_URL | sed 's/tmpfiles.org\//tmpfiles.org\/dl\//')
-          
-          if [ -z "$TEMP_UPLOAD_URL" ]; then
-             echo "❌ Gagal upload ke TmpFiles"
+          # Cek apakah URL berhasil didapat
+          if [ "$UPLOAD_URL" == "null" ] || [ -z "$UPLOAD_URL" ]; then
+             echo "❌ Gagal upload ke File.io!"
+             echo "Debug Server Response: $RESPONSE"
              exit 1
           fi
+          
+          echo "✅ Upload Sukses!"
+          echo "🔗 One-Time Link: $UPLOAD_URL"
+          
+          # 4. Siapkan Link GitHub untuk teks pesan (Permanen)
+          GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
 
           echo "📨 Mengirim notifikasi ke n8n..."
-          # Payload JSON tetap sama
+          # Kirim ke n8n
           curl -v --retry 3 \
             -X POST -H "Content-Type: application/json" \
-            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"github_url\": \"$GITHUB_URL\", \"upload_url\": \"$TEMP_UPLOAD_URL\"}" \
+            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"github_url\": \"$GITHUB_URL\", \"upload_url\": \"$UPLOAD_URL\"}" \
             https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
