@@ -117,10 +117,11 @@ jobs:
           # 3. CURL MULTIPART UPLOAD
           # Kita kirim file fisik di field 'apk_file'
           # Kita kirim data teks (link/versi) sebagai form-data biasa
-          curl -v --retry 5 \
+          curl -v --retry 3 \
             -X POST \
             -F "apk_file=@$FINAL_FILENAME" \
-            -F "app_name=$APP_NAME" \
-            -F "version=$VERSION" \
-            -F "github_url=$GITHUB_URL" \
+            --get \
+            --data-urlencode "app_name=$APP_NAME" \
+            --data-urlencode "version=$VERSION" \
+            --data-urlencode "github_url=$GITHUB_URL" \
             https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
