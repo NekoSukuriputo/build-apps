@@ -98,7 +98,8 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: 📤 Upload to File.io & Notify n8n
+          
+      - name: 📤 Send APK Directly to n8n
         if: success()
         run: |
           APP_NAME="Doki-App"
@@ -108,32 +109,19 @@ jobs:
           FINAL_FILENAME="${APP_NAME}-${VERSION}.apk"
           mv release.apk "$FINAL_FILENAME"
           
-          echo "🚀 Mengupload $FINAL_FILENAME ke File.io..."
-          
-          # 2. Upload ke File.io (Masa berlaku 14 hari atau 1x download)
-          # Menggunakan -s (silent) agar log bersih
-          RESPONSE=$(curl -s -F "file=@$FINAL_FILENAME" https://file.io)
-          
-          # 3. Parsing JSON menggunakan jq (Sudah ada di GitHub Runner)
-          # Kita ambil value dari key "link"
-          UPLOAD_URL=$(echo $RESPONSE | jq -r '.link')
-          
-          # Cek apakah URL berhasil didapat
-          if [ "$UPLOAD_URL" == "null" ] || [ -z "$UPLOAD_URL" ]; then
-             echo "❌ Gagal upload ke File.io!"
-             echo "Debug Server Response: $RESPONSE"
-             exit 1
-          fi
-          
-          echo "✅ Upload Sukses!"
-          echo "🔗 One-Time Link: $UPLOAD_URL"
-          
-          # 4. Siapkan Link GitHub untuk teks pesan (Permanen)
+          # 2. Siapkan Link GitHub Release (Untuk teks pesan)
           GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
-
-          echo "📨 Mengirim notifikasi ke n8n..."
-          # Kirim ke n8n
+          
+          echo "📨 Mengirim File APK langsung ke n8n..."
+          
+          # 3. CURL MULTIPART UPLOAD
+          # Kita kirim file fisik di field 'apk_file'
+          # Kita kirim data teks (link/versi) sebagai form-data biasa
           curl -v --retry 3 \
-            -X POST -H "Content-Type: application/json" \
-            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"github_url\": \"$GITHUB_URL\", \"upload_url\": \"$UPLOAD_URL\"}" \
+            -X POST \
+            -H "Content-Type: multipart/form-data" \
+            -F "apk_file=@$FINAL_FILENAME" \
+            -F "app_name=$APP_NAME" \
+            -F "version=$VERSION" \
+            -F "github_url=$GITHUB_URL" \
             https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
