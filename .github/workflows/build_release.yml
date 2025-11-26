@@ -98,17 +98,32 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: 📨 Notify Telegram via n8n (With Delay)
+      - name: 📤 Upload to TmpFiles & Notify n8n
         if: success()
         run: |
           APP_NAME="Doki-App"
           VERSION="${{ steps.release_info.outputs.tag }}"
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/release.apk"
+          APK_PATH="release.apk"
           
-          echo "⏳ Menunggu 30 detik agar CDN GitHub siap..."
-          sleep 30
+          # 1. Link Permanen (GitHub Release) untuk ditampilkan di Teks Pesan
+          GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          
+          echo "🚀 Mengupload ke TmpFiles.org (Helper)..."
+          RESPONSE=$(curl -F "file=@$APK_PATH" https://tmpfiles.org/api/v1/upload)
+          PREVIEW_URL=$(echo $RESPONSE | grep -o 'https://tmpfiles.org/[^"]*')
+          
+          # 2. Link Sementara (Direct) untuk Bot mengupload File
+          # Ubah jadi direct link (/dl/)
+          TEMP_UPLOAD_URL=$(echo $PREVIEW_URL | sed 's/tmpfiles.org\//tmpfiles.org\/dl\//')
+          
+          if [ -z "$TEMP_UPLOAD_URL" ]; then
+             echo "❌ Gagal upload ke TmpFiles"
+             exit 1
+          fi
 
-          curl -v --retry 3 \
+          echo "📨 Mengirim notifikasi ke n8n..."
+          # Perhatikan payload JSON di bawah, kita kirim 2 link berbeda
+          curl -v --retry 5 \
             -X POST -H "Content-Type: application/json" \
-            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"download_url\": \"$DOWNLOAD_URL\"}" \
+            -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"github_url\": \"$GITHUB_URL\", \"upload_url\": \"$TEMP_UPLOAD_URL\"}" \
             https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
