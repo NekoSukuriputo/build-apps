@@ -120,8 +120,4 @@ jobs:
           curl -v --retry 3 \
             -X POST \
             -F "apk_file=@$FINAL_FILENAME" \
-            --get \
-            --data-urlencode "app_name=$APP_NAME" \
-            --data-urlencode "version=$VERSION" \
-            --data-urlencode "github_url=$GITHUB_URL" \
-            https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
+            "https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build?app_name=$APP_NAME&version=$VERSION&github_url=$GITHUB_URL"
