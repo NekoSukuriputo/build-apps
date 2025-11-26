@@ -99,25 +99,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: 📤 Send APK Directly to n8n
+      - name: 🔔 Trigger n8n to Download & Send
         if: success()
         run: |
           APP_NAME="Doki-App"
           VERSION="${{ steps.release_info.outputs.tag }}"
           
-          # 1. Rename File agar rapi di Telegram
-          FINAL_FILENAME="${APP_NAME}-${VERSION}.apk"
-          mv release.apk "$FINAL_FILENAME"
+          # Link GitHub Release Resmi
+          GITHUB_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/release.apk"
           
-          # 2. Siapkan Link GitHub Release (Untuk teks pesan)
-          GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          echo "📨 Menyuruh n8n mendownload dari: $GITHUB_URL"
           
-          echo "📨 Mengirim File APK langsung ke n8n..."
+          # Kita cuma kirim Teks URL. Tidak kirim file fisik.
+          # Ini sangat cepat dan tidak mungkin corrupt.
           
-          # 3. CURL MULTIPART UPLOAD
-          # Kita kirim file fisik di field 'apk_file'
-          # Kita kirim data teks (link/versi) sebagai form-data biasa
           curl -v --retry 3 \
-            -X POST \
-            -F "apk_file=@$FINAL_FILENAME;type=application/vnd.android.package-archive" \
             "https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build?app_name=$APP_NAME&version=$VERSION&github_url=$GITHUB_URL"
