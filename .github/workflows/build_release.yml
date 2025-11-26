@@ -103,17 +103,27 @@ jobs:
         run: |
           APP_NAME="Doki-App"
           VERSION="${{ steps.release_info.outputs.tag }}"
-          APK_PATH="release.apk"
           
-          # 1. Link Permanen (GitHub Release) untuk ditampilkan di Teks Pesan
+          # 1. Tentukan Nama File Keren yang diinginkan
+          # Contoh hasil: "Doki-App-v20251126.apk"
+          FINAL_FILENAME="${APP_NAME}-${VERSION}.apk"
+          
+          # 2. Rename file 'release.apk' menjadi nama baru
+          mv release.apk "$FINAL_FILENAME"
+          
+          echo "✅ File direname menjadi: $FINAL_FILENAME"
+          
+          # Link Permanen GitHub (Untuk Teks Pesan)
           GITHUB_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
           
-          echo "🚀 Mengupload ke TmpFiles.org (Helper)..."
-          RESPONSE=$(curl -F "file=@$APK_PATH" https://tmpfiles.org/api/v1/upload)
+          echo "🚀 Mengupload ke TmpFiles.org..."
+          
+          # Upload file dengan nama BARU
+          RESPONSE=$(curl -F "file=@$FINAL_FILENAME" https://tmpfiles.org/api/v1/upload)
           PREVIEW_URL=$(echo $RESPONSE | grep -o 'https://tmpfiles.org/[^"]*')
           
-          # 2. Link Sementara (Direct) untuk Bot mengupload File
           # Ubah jadi direct link (/dl/)
+          # Karena kita upload dengan nama baru, URL-nya otomatis jadi .../Doki-App-v2025.apk
           TEMP_UPLOAD_URL=$(echo $PREVIEW_URL | sed 's/tmpfiles.org\//tmpfiles.org\/dl\//')
           
           if [ -z "$TEMP_UPLOAD_URL" ]; then
@@ -122,8 +132,8 @@ jobs:
           fi
 
           echo "📨 Mengirim notifikasi ke n8n..."
-          # Perhatikan payload JSON di bawah, kita kirim 2 link berbeda
-          curl -v --retry 5 \
+          # Payload JSON tetap sama
+          curl -v --retry 3 \
             -X POST -H "Content-Type: application/json" \
             -d "{\"app_name\": \"$APP_NAME\", \"version\": \"$VERSION\", \"github_url\": \"$GITHUB_URL\", \"upload_url\": \"$TEMP_UPLOAD_URL\"}" \
             https://ai-n8n.nekosukuriputo.dev/webhook/github-apk-build
