@@ -117,9 +117,8 @@ jobs:
           # 3. CURL MULTIPART UPLOAD
           # Kita kirim file fisik di field 'apk_file'
           # Kita kirim data teks (link/versi) sebagai form-data biasa
-          curl -v --retry 3 \
+          curl -v --retry 5 \
             -X POST \
-            -H "Content-Type: multipart/form-data" \
             -F "apk_file=@$FINAL_FILENAME" \
             -F "app_name=$APP_NAME" \
             -F "version=$VERSION" \
