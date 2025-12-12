@@ -32,52 +32,35 @@ jobs:
 
       - name: Build Release APK (Attempt 1) 💻
         run: |
-          # Definisikan variabel dulu agar perintah gradle bersih
-          TG_TOKEN=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json)
-          # Mengambil hash commit 10 karakter pertama dari repo NekoSukuriputo
-          EXTS_SHA=$(curl -s https://api.github.com/repos/NekoSukuriputo/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
-          
-          echo "Using EXTS_SHA: $EXTS_SHA"
-
           ./gradlew assembleRelease \
-            -Dtg_backup_bot_token="$TG_TOKEN" \
-            -Dgh_username="${{ github.repository_owner }}" \
-            -Dexts="$EXTS_SHA"
+          -Dtg_backup_bot_token=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json) \
+          -Dgh_username=${{ github.repository_owner }} \
+          -Dexts=$(curl -s https://api.github.com/repos/DokiTeam/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
         continue-on-error: true
 
       - name: Build Release APK (Attempt 2) 💻
-        run: |
+        run: >-
           if [ ! -f ${{ env.APK_PATH }} ]; then
-            echo "⚠️ Build attempt 1 failed, retrying..."
-            pkill -f java || true
-            
-            TG_TOKEN=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json)
-            EXTS_SHA=$(curl -s https://api.github.com/repos/NekoSukuriputo/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
-
+            pkill -f java &&
             ./gradlew assembleRelease \
-              -Dtg_backup_bot_token="$TG_TOKEN" \
-              -Dgh_username="${{ github.repository_owner }}" \
-              -Dexts="$EXTS_SHA"
+          -Dtg_backup_bot_token=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json) \
+          -Dgh_username=${{ github.repository_owner }} \
+          -Dexts=$(curl -s https://api.github.com/repos/DokiTeam/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
           else
-            echo "✅ Release build already exists, skipping build attempt 2"
+            echo "✅ Release build already exists, skipping build attempt 2";
           fi
         continue-on-error: true
 
       - name: Build Release APK (Attempt 3) 💻
-        run: |
+        run: >-
           if [ ! -f ${{ env.APK_PATH }} ]; then
-            echo "⚠️ Build attempt 2 failed, retrying..."
-            pkill -f java || true
-            
-            TG_TOKEN=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json)
-            EXTS_SHA=$(curl -s https://api.github.com/repos/NekoSukuriputo/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
-
+            pkill -f java &&
             ./gradlew assembleRelease \
-              -Dtg_backup_bot_token="$TG_TOKEN" \
-              -Dgh_username="${{ github.repository_owner }}" \
-              -Dexts="$EXTS_SHA"
+          -Dtg_backup_bot_token=$(curl -s https://dragonx943.github.io/waydroid_x86_64/value.json) \
+          -Dgh_username=${{ github.repository_owner }} \
+          -Dexts=$(curl -s https://api.github.com/repos/DokiTeam/doki-exts/commits/base -H "Accept: application/vnd.github.sha" | cut -c -10)
           else
-            echo "✅ Release build already exists, skipping build attempt 3"
+            echo "✅ Release build already exists, skipping build attempt 3";
           fi
         continue-on-error: false
 
