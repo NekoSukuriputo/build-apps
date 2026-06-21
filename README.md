@@ -1,5 +1,9 @@
 # Automation for Doki (Source code)
 
+> [!IMPORTANT]
+> We have officially moved to **Usagi (兎)**, you can find us [here](https://github.com/UsagiApp). Usagi offers more features and freedom than Doki.
+> Thanks to [Jerry](https://github.com/JeremyChoco) for continuing to develop it. Also thanks to [Draken](https://github.com/dragonx943) for creating Doki application.
+
 ### Please give the repo a :star:
 
 ### Usage
